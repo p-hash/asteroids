@@ -2,11 +2,20 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define EPS 0.000001
 #define WIDTH 640
 #define HEIGHT 480
 
 #define SHIP_MAX_SPEED 20
+#define SHIP_MIN_SPEED 0.01
+#define SHIP_ROT_SPEED 0.08
+#define SHIP_ENGINE_ACCEL 0.075
+#define SHIP_SLOWDOWN_ACCEL 0.995
+
 #define MISSLE_SPEED 13
 #define MISSLE_LIFE 30
 
@@ -67,7 +76,7 @@ void cleanup()
 
 void putpixel(SDL_Surface *screen, pixel_t* pixel, uint32_t color)
 {
-    int bpp = screen->format->BytesPerPixel;
+    int bpp = screen -> format -> BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
     uint8_t *p = (uint8_t *) screen -> pixels + pixel -> y * screen -> pitch + pixel -> x * bpp;	
 	if (pixel -> y < 0)
@@ -157,8 +166,8 @@ void line(SDL_Surface* surface, pixel_t* const from, pixel_t* const to, uint32_t
 
 pixel_t* pixel_create_from(pixel_t* o, int dx, int dy, double angle)
 {
-	int x = (int) floor(dx * cos(angle) + dy * sin(angle));
-	int y = (int) floor( -1 * dx * sin(angle) + dy * cos(angle));
+	int x = (int) round(dx * cos(angle) + dy * sin(angle));
+	int y = (int) round( -1 * dx * sin(angle) + dy * cos(angle));
 	x += o -> x;
 	y += o -> y;
 	return pixel_create(x, y);
@@ -166,9 +175,9 @@ pixel_t* pixel_create_from(pixel_t* o, int dx, int dy, double angle)
 
 void draw_ship(SDL_Surface* screen, ship_t* ship)
 { /* ДАВАЙ РИСОВАТЬ КОРАБЛИК! */
-	pixel_t* center = pixel_create((int)round(ship->x),(int)round(ship->y));
+	pixel_t* center = pixel_create((int) round(ship -> x),(int) round(ship -> y));
 	double angle = ship -> angle;
-	uint32_t color = SDL_MapRGB(screen->format, 0xff, 0xff, 0xff);
+	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
 	pixel_t* front = pixel_create_from(center, 20, 0, angle);
 	pixel_t* right = pixel_create_from(center, 0, 8, angle);
 	pixel_t* right_back = pixel_create_from(center, -4, 10, angle);
@@ -177,19 +186,60 @@ void draw_ship(SDL_Surface* screen, ship_t* ship)
 	line(screen, front, right_back, color);
 	line(screen, front, left_back, color);
 	line(screen, left, right, color);
-	free(front);
+	free(front); 
 	free(right); free(right_back);
 	free(left); free(left_back);
+	if (ship -> engine)
+	{
+		pixel_t* back = pixel_create_from(center, -6, 0, angle);
+		color = SDL_MapRGB(screen -> format, 0xff, 0, 0);
+		right_back = pixel_create_from(center, -1, 4, angle);
+		left_back = pixel_create_from(center, -1, -4, angle);
+		line(screen, right_back, back, color);
+		line(screen, left_back, back, color);
+		free(back); free(right_back); free(left_back);
+	}
+	free(center);
 }
 
 void draw_asts(SDL_Surface* screen, asteroid_t* list)
 {
-	
+	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
+	while (list != NULL)
+	{
+		int size = list -> size * 2;
+		pixel_t* center = pixel_create( 
+			(int)round(list -> x), 
+			(int)round(list -> y) );
+		pixel_t* p1 = pixel_create_from(center, -5 * size, 2 * size, 0);
+		pixel_t* p2 = pixel_create_from(center, 1 * size, 5 * size, 0);
+		line(screen, p1, p2, color); free(p1);
+		p1 = pixel_create_from(center, 3 * size, 4 * size, 0); /* 3 */
+		line(screen, p1, p2, color); free(p2);
+		p2 = pixel_create_from(center, 1 * size, -1 * size, 0); /* 4 */
+		line(screen, p1, p2, color); free(p1);
+		p1 = pixel_create_from(center, 4 * size, 1 * size, 0); /* 5 */
+		line(screen, p1, p2, color); free(p2);
+		p2 = pixel_create_from(center, 5 * size, -3 * size, 0); /* 6 */
+		line(screen, p1, p2, color); free(p1);
+		p1 = pixel_create_from(center, 3 * size, -5 * size, 0); /* 7 */
+		line(screen, p1, p2, color); free(p2);
+		p2 = pixel_create_from(center, -3 * size, -5 * size, 0); /* 8 */
+		line(screen, p1, p2, color); free(p1);
+		p1 = pixel_create_from(center, -5 * size, -1 * size, 0); /* 9 */
+		line(screen, p1, p2, color); free(p2);
+		p2 = pixel_create_from(center, -2 * size, 0 * size, 0); /* 10 */
+		line(screen, p1, p2, color); free(p1);
+		p1 = pixel_create_from(center, -5 * size, 2 * size, 0); /* 1 */
+		line(screen, p1, p2, color); free(p2);
+		free(p1); free(center);
+		list = list -> next;
+	}
 }
 
 void draw_missles(SDL_Surface* screen, missle_t* list)
 {
-	uint32_t color = SDL_MapRGB(screen->format, 0xff, 0xff, 0x00);
+	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0x00);
 	while (list != NULL)
 	{
 		pixel_t* pixel = pixel_create((int)list -> x, (int)list -> y);
@@ -242,20 +292,27 @@ SDL_Surface* init_video()
 ship_t* init_ship()
 {	
 	ship_t* ship  = (ship_t*) malloc(sizeof(ship_t));
-	ship -> x = 70;
-	ship -> y = 70;
+	ship -> x = WIDTH / 2;
+	ship -> y = HEIGHT / 2;
 	ship -> speed_x = 0;
 	ship -> speed_y = 0;
 	ship -> rotating_left = 0;
 	ship -> rotating_right = 0;
 	ship -> engine = 0;
-	ship -> angle = 0;
+	ship -> angle = M_PI / 2;
 	return ship;
 }
 
 asteroid_t* init_asteroids()
 {
-	return NULL;
+	asteroid_t* ast = (asteroid_t*) malloc(sizeof(asteroid_t));
+	ast -> x = 200;
+	ast -> y = 200;
+	ast -> speed_x = 0;
+	ast -> speed_y = 0;
+	ast -> size = 3;
+	ast -> next = NULL;
+	return ast;
 }
 
 world_t* init_world()
@@ -340,31 +397,33 @@ double sqr(double x)
 
 void update_ship(ship_t* ship)
 {
-	double degree = 0.08; 
+	double speed = sqr(ship -> speed_x) + sqr(ship -> speed_y);
 	if (ship -> rotating_left) 
 	{
-		ship -> angle += degree;
+		ship -> angle += SHIP_ROT_SPEED;
 	}
 	if (ship -> rotating_right)
 	{
-		ship -> angle -= degree;
+		ship -> angle -= SHIP_ROT_SPEED;
 	}
 	
 	if (ship -> engine)
 	{
-		if ( (sqr(ship -> speed_x) + sqr(ship -> speed_y)) < SHIP_MAX_SPEED ) 
+		if ( speed < SHIP_MAX_SPEED ) 
 		{
-			double accel = 0.075;
-			ship -> speed_x += accel * cos(ship -> angle);
-			ship -> speed_y -= accel * sin(ship -> angle);
+			ship -> speed_x += SHIP_ENGINE_ACCEL * cos(ship -> angle);
+			ship -> speed_y -= SHIP_ENGINE_ACCEL * sin(ship -> angle);
 		}
 	}
-	else
+	
+	ship -> speed_x *= SHIP_SLOWDOWN_ACCEL;
+	ship -> speed_y *= SHIP_SLOWDOWN_ACCEL;
+	speed = sqr(ship -> speed_x) + sqr(ship -> speed_y);
+	if ( (speed < SHIP_MIN_SPEED) & !(ship -> engine) ) 
 	{
-		double accel = 0.995;
-		ship -> speed_x *= accel;
-		ship -> speed_y *= accel;
-	}	
+		ship -> speed_x = 0;
+		ship -> speed_y = 0;
+	}			
 		
 	ship -> x += ship -> speed_x;
 	ship -> y += ship -> speed_y;
