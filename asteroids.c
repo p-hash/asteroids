@@ -1,329 +1,6 @@
-#include <SDL/SDL.h>
-#include <stdio.h>
-#include <math.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#define EPS 0.000001
-#define WIDTH 640
-#define HEIGHT 480
-
-#define SHIP_MAX_SPEED 20
-#define SHIP_MIN_SPEED 0.01
-#define SHIP_ROT_SPEED 0.08
-#define SHIP_ENGINE_ACCEL 0.075
-#define SHIP_SLOWDOWN_ACCEL 0.995
-
-#define MISSLE_SPEED 13
-#define MISSLE_LIFE 30
-
-typedef struct {
-	int x;
-	int y;
-} pixel_t;
-
-typedef struct {
-	double x;
-	double y;
-	double angle;
-	int engine;
-	int rotating_right;
-	int rotating_left;
-	int shoot;
-	double speed_x;
-	double speed_y;
-} ship_t;
-
-typedef struct missle_t {
-	double x;
-	double y;
-	double speed_x;
-	double speed_y;	
-	int life;
-	struct missle_t* next;
-} missle_t;
-
-typedef struct asteroid_t {
-	double x;
-	double y;
-	double speed_x;
-	double speed_y;
-	int size;
-	struct asteroid_t* next;
-} asteroid_t;
-
-typedef struct {
-	double x;
-	double y;
-	double speed_x;
-	double speed_y;	
-} enemy_t;
-
-typedef struct {
-	ship_t* ship;
-	missle_t* missles;
-	asteroid_t* asteroids;
-	enemy_t* enemies;
-} world_t;
-
-void cleanup()
-{
-	SDL_Quit();
-	exit(0);
-}
-
-void putpixel(SDL_Surface *screen, pixel_t* pixel, uint32_t color)
-{
-    int bpp = screen -> format -> BytesPerPixel;
-    /* Here p is the address to the pixel we want to set */
-    uint8_t *p = (uint8_t *) screen -> pixels + pixel -> y * screen -> pitch + pixel -> x * bpp;	
-	if (pixel -> y < 0)
-		return;
-	if (pixel -> x < 0)
-		return;
-	
-    switch(bpp) {
-    case 1:
-        *p = color;
-        break;
-
-    case 2:
-        *(uint16_t *)p = color;
-        break;
-
-    case 3:
-        if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-            p[0] = (color >> 16) & 0xff;
-            p[1] = (color >> 8) & 0xff;
-            p[2] = color & 0xff;
-        } else {
-            p[0] = color & 0xff;
-            p[1] = (color >> 8) & 0xff;
-            p[2] = (color >> 16) & 0xff;
-        }
-        break;
-
-    case 4:
-        *(uint32_t *)p = color;
-        break;
-    }
-}
-
-pixel_t* pixel_create(unsigned int const x, 
-					   unsigned int const y)
-{
-	pixel_t* pixel = (pixel_t*) malloc(sizeof(pixel_t));
-	/* Map the color yellow to this display (R=0xff, G=0xFF, B=0x00)
-	   Note:  If the display is palettized, you must set the palette first.
-	*/
-	pixel -> x = x;
-	pixel -> y = y;
-	return pixel;
-}
-
-void swap(int* a, int* b) 
-{
-	int r = *a;
-	*a = *b;
-	*b = r;
-}
-
-void line(SDL_Surface* surface, pixel_t* const from, pixel_t* const to, uint32_t color)
-{	
-	double dy = (to -> y) - (from -> y);
-	double dx = (to -> x) - (from -> x);
-	if (abs(dx) >= abs(dy))
-	{
-		int x;
-		int a = from -> x;
-		int b = to -> x;
-		double k = dy / dx;
-		double c = from -> y + 0.5 - k * (from -> x);
-		if (b < a) swap(&a, &b);
-		for (x = a; x <= b; x++)
-		{
-			int y = (int) floor( k * x + c );
-			putpixel(surface, pixel_create(x, y), color);
-		}
-	}
-	else
-	{
-		int y;
-		int a = from -> y;
-		int b = to -> y;
-		double k = dx / dy;
-		double c = from -> x + 0.5 - k * (from -> y);
-		if (b < a) swap(&a, &b);
-		for (y = a; y <= b; y++)
-		{
-			int x = (int) floor( k * y + c );
-			putpixel(surface, pixel_create(x, y), color);
-		}
-	}
-}
-
-pixel_t* pixel_create_from(pixel_t* o, int dx, int dy, double angle)
-{
-	int x = (int) round(dx * cos(angle) + dy * sin(angle));
-	int y = (int) round( -1 * dx * sin(angle) + dy * cos(angle));
-	x += o -> x;
-	y += o -> y;
-	return pixel_create(x, y);
-}
-
-void draw_ship(SDL_Surface* screen, ship_t* ship)
-{ /* ДАВАЙ РИСОВАТЬ КОРАБЛИК! */
-	pixel_t* center = pixel_create((int) round(ship -> x),(int) round(ship -> y));
-	double angle = ship -> angle;
-	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
-	pixel_t* front = pixel_create_from(center, 20, 0, angle);
-	pixel_t* right = pixel_create_from(center, 0, 8, angle);
-	pixel_t* right_back = pixel_create_from(center, -4, 10, angle);
-	pixel_t* left = pixel_create_from(center, 0, -8, angle);
-	pixel_t* left_back = pixel_create_from(center, -4, -10, angle);
-	line(screen, front, right_back, color);
-	line(screen, front, left_back, color);
-	line(screen, left, right, color);
-	free(front); 
-	free(right); free(right_back);
-	free(left); free(left_back);
-	if (ship -> engine)
-	{
-		pixel_t* back = pixel_create_from(center, -6, 0, angle);
-		color = SDL_MapRGB(screen -> format, 0xff, 0, 0);
-		right_back = pixel_create_from(center, -1, 4, angle);
-		left_back = pixel_create_from(center, -1, -4, angle);
-		line(screen, right_back, back, color);
-		line(screen, left_back, back, color);
-		free(back); free(right_back); free(left_back);
-	}
-	free(center);
-}
-
-void draw_asts(SDL_Surface* screen, asteroid_t* list)
-{
-	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
-	while (list != NULL)
-	{
-		int size = list -> size * 2;
-		pixel_t* center = pixel_create( 
-			(int)round(list -> x), 
-			(int)round(list -> y) );
-		pixel_t* p1 = pixel_create_from(center, -5 * size, 2 * size, 0);
-		pixel_t* p2 = pixel_create_from(center, 1 * size, 5 * size, 0);
-		line(screen, p1, p2, color); free(p1);
-		p1 = pixel_create_from(center, 3 * size, 4 * size, 0); /* 3 */
-		line(screen, p1, p2, color); free(p2);
-		p2 = pixel_create_from(center, 1 * size, -1 * size, 0); /* 4 */
-		line(screen, p1, p2, color); free(p1);
-		p1 = pixel_create_from(center, 4 * size, 1 * size, 0); /* 5 */
-		line(screen, p1, p2, color); free(p2);
-		p2 = pixel_create_from(center, 5 * size, -3 * size, 0); /* 6 */
-		line(screen, p1, p2, color); free(p1);
-		p1 = pixel_create_from(center, 3 * size, -5 * size, 0); /* 7 */
-		line(screen, p1, p2, color); free(p2);
-		p2 = pixel_create_from(center, -3 * size, -5 * size, 0); /* 8 */
-		line(screen, p1, p2, color); free(p1);
-		p1 = pixel_create_from(center, -5 * size, -1 * size, 0); /* 9 */
-		line(screen, p1, p2, color); free(p2);
-		p2 = pixel_create_from(center, -2 * size, 0 * size, 0); /* 10 */
-		line(screen, p1, p2, color); free(p1);
-		p1 = pixel_create_from(center, -5 * size, 2 * size, 0); /* 1 */
-		line(screen, p1, p2, color); free(p2);
-		free(p1); free(center);
-		list = list -> next;
-	}
-}
-
-void draw_missles(SDL_Surface* screen, missle_t* list)
-{
-	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0x00);
-	while (list != NULL)
-	{
-		pixel_t* pixel = pixel_create((int)list -> x, (int)list -> y);
-		putpixel(screen, pixel, color);
-		free(pixel);
-		list = list -> next;
-	}
-}
-
-void draw(SDL_Surface* screen, world_t* world)
-{
-	if ( SDL_MUSTLOCK(screen) ) {
-		if ( SDL_LockSurface(screen) < 0 ) {
-			fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
-		}
-	}
-	SDL_FillRect(screen, NULL, 0x000000);
-	
-	draw_ship(screen, world -> ship);
-	draw_asts(screen, world -> asteroids);
-	draw_missles(screen, world -> missles);
-	
-	if ( SDL_MUSTLOCK(screen) ) {
-		SDL_UnlockSurface(screen);
-	}
-	SDL_UpdateRect(screen, 0, 0, 0, 0);
-}
-
-SDL_Surface* init_video()
-{
-	SDL_Surface* screen;
-    if((SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==-1)) { 
-        fprintf(stderr, "Could not initialize SDL: %s.\n",
-						SDL_GetError());
-        exit(-1);
-    }
-	atexit(cleanup); 
-	screen = SDL_SetVideoMode(WIDTH, HEIGHT, 8, SDL_SWSURFACE);
-    if ( screen == NULL ) {
-        fprintf(stderr, "Couldn't set %dx%dx8 video mode: %s\n",
-						WIDTH, HEIGHT,
-                        SDL_GetError());
-        exit(1);
-    }
-	SDL_WM_SetCaption("asteroids", NULL);
-	
-	return screen;
-}
-
-ship_t* init_ship()
-{	
-	ship_t* ship  = (ship_t*) malloc(sizeof(ship_t));
-	ship -> x = WIDTH / 2;
-	ship -> y = HEIGHT / 2;
-	ship -> speed_x = 0;
-	ship -> speed_y = 0;
-	ship -> rotating_left = 0;
-	ship -> rotating_right = 0;
-	ship -> engine = 0;
-	ship -> angle = M_PI / 2;
-	return ship;
-}
-
-asteroid_t* init_asteroids()
-{
-	asteroid_t* ast = (asteroid_t*) malloc(sizeof(asteroid_t));
-	ast -> x = 200;
-	ast -> y = 200;
-	ast -> speed_x = 0;
-	ast -> speed_y = 0;
-	ast -> size = 3;
-	ast -> next = NULL;
-	return ast;
-}
-
-world_t* init_world()
-{
-	world_t* world = (world_t*) malloc(sizeof(world_t));
-	world -> ship = init_ship();
-	world -> asteroids = init_asteroids();
-	world -> missles = NULL;
-	world -> enemies = NULL;
-	return world;
-}
+#include "asteroids.h"
+#include "render.c"
+#include "init.c"
 
 void process_input(ship_t* ship)
 {
@@ -397,9 +74,9 @@ double sqr(double x)
 
 void update_ship(ship_t* ship)
 {
-	double speed = sqr(ship -> speed_x) + sqr(ship -> speed_y);
+	double speed = sqrt( sqr(ship -> speed_x) + sqr(ship -> speed_y) );
 	if (ship -> rotating_left) 
-	{
+	{ 	
 		ship -> angle += SHIP_ROT_SPEED;
 	}
 	if (ship -> rotating_right)
@@ -416,9 +93,9 @@ void update_ship(ship_t* ship)
 		}
 	}
 	
-	ship -> speed_x *= SHIP_SLOWDOWN_ACCEL;
-	ship -> speed_y *= SHIP_SLOWDOWN_ACCEL;
-	speed = sqr(ship -> speed_x) + sqr(ship -> speed_y);
+	ship -> speed_x *= SHIP_SLOWDOWN;
+	ship -> speed_y *= SHIP_SLOWDOWN;
+	speed = sqrt( sqr(ship -> speed_x) + sqr(ship -> speed_y) );
 	if ( (speed < SHIP_MIN_SPEED) & !(ship -> engine) ) 
 	{
 		ship -> speed_x = 0;
@@ -433,7 +110,7 @@ void update_ship(ship_t* ship)
 	if (ship -> y < 0) ship -> y += HEIGHT;
 }
 
-asteroid_t* update_asts(asteroid_t* list) {
+asteroid_t* update_asts( asteroid_t* list ) {
 	asteroid_t* ret = list;
 	asteroid_t* ast = list;
 	while (ast != NULL)
@@ -493,9 +170,38 @@ missle_t* update_missles(missle_t* list) {
 	return ret;
 }
 
-void detect_collissions(world_t* world)
+int in_range(double x, double a, double b)
 {
-	return;
+	if (a > b) 
+	{
+		double r = a;
+		a = b;
+		b = r;
+	}
+	if (x < a) return 0;
+	if (x > b) return 0;
+	return 1;
+}
+
+void detect_collisions(world_t* world) 
+{
+	asteroid_t* ast = world -> asteroids;
+	ship_t* ship = world -> ship;
+	double k = cos(ship -> angle) / sin( ship -> angle );
+	double ship_front_y = -20 * sin( ship -> angle ) + ship -> y;
+	while (ast != NULL)
+	{
+		double dy = k * ( k * ast -> y + ast -> x - ship -> x ) + ship -> y;
+		dy /= 1 + sqr(k);
+		if ( in_range(dy, ship_front_y, ship -> y) )
+		{/*
+			printf("collided \n");
+			free(ship);
+			world -> ship = init_ship();
+			*/
+		}
+		ast = ast -> next;
+	}
 }
 
 void update_world(world_t* world)
@@ -504,12 +210,12 @@ void update_world(world_t* world)
 	world -> missles = add_missle(world -> missles, world -> ship);
 	world -> missles = update_missles(world -> missles);
 	world -> asteroids = update_asts(world -> asteroids);
-	detect_collissions(world);
+	detect_collisions(world);
 }
 
 int main (int argc, char** argv)
 {
-	SDL_Surface *screen = init_video();
+	SDL_Surface* screen = init_video();
 	world_t* world = init_world();
 	
 	while(1)
