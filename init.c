@@ -92,6 +92,7 @@ ship_t* init_ship()
 	ship -> rotating_right = 0;
 	ship -> engine = 0;
 	ship -> angle = M_PI / 2;
+	ship -> shoot = 0;
 	return ship;
 }
 

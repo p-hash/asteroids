@@ -1,6 +1,8 @@
 #include <SDL/SDL.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #ifndef ASTEROIDS_HEADERS
 #define ASTEROIDS_HEADERS
@@ -19,13 +21,22 @@
 #define SHIP_ENGINE_ACCEL 0.075
 #define SHIP_SLOWDOWN 0.995
 
-#define MISSLE_SPEED 13
-#define MISSLE_LIFE 30
+#define MISSLE_SPEED 10
+#define MISSLE_LIFE 40
+
+#define ASTEROID_MAX_SPEED 15
+#define ASTEROID_SLOWDOWN 0.997
+#define ASTEROID_MIN_SPEED 5
 
 typedef struct {
 	int x;
 	int y;
 } pixel_t;
+
+typedef struct {
+	double min;
+	double max;
+} projection_t;
 
 typedef struct {
 	pixel_t* nodes;
@@ -41,7 +52,8 @@ shape_t ASTEROID_COLLISION_SHAPE;
 
 typedef struct {
 	double k;
-	double b;
+	double dx;
+	double dy;
 } axis_t;
 
 typedef struct {

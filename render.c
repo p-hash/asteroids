@@ -1,13 +1,13 @@
 #include "asteroids.h"
 
-void putpixel(SDL_Surface *screen, pixel_t* pixel, uint32_t color)
+void putpixel(SDL_Surface *screen, pixel_t pixel, uint32_t color)
 {
     int bpp = screen -> format -> BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
-    uint8_t *p = (uint8_t *) screen -> pixels + pixel -> y * screen -> pitch + pixel -> x * bpp;	
-	if (pixel -> y < 0)
+    uint8_t *p = (uint8_t *) screen -> pixels + pixel.y * screen -> pitch + pixel.x * bpp;	
+	if ( (pixel.y < 0) || (pixel.y > HEIGHT) )
 		return;
-	if (pixel -> x < 0)
+	if ( (pixel.x < 0) || (pixel.x > WIDTH) )
 		return;
 	
     switch(bpp) {
@@ -37,11 +37,11 @@ void putpixel(SDL_Surface *screen, pixel_t* pixel, uint32_t color)
     }
 }
 
-pixel_t* pixel_create(int const x, int const y)
+pixel_t pixel_create(int const x, int const y)
 {
-	pixel_t* pixel = (pixel_t*) malloc(sizeof(pixel_t));
-	pixel -> x = x;
-	pixel -> y = y;
+	pixel_t pixel;
+	pixel.x = x;
+	pixel.y = y;
 	return pixel;
 }
 
@@ -67,7 +67,7 @@ void line(SDL_Surface* surface, pixel_t* const from, pixel_t* const to, uint32_t
 		for (x = a; x <= b; x++)
 		{
 			int y = (int) floor( k * x + c );
-			putpixel(surface, pixel_create(x, y), color);
+			putpixel(surface, pixel_create(x, y), color); 
 		}
 	}
 	else
@@ -81,33 +81,31 @@ void line(SDL_Surface* surface, pixel_t* const from, pixel_t* const to, uint32_t
 		for (y = a; y <= b; y++)
 		{
 			int x = (int) floor( k * y + c );
-			putpixel(surface, pixel_create(x, y), color);
+			putpixel(surface, pixel_create(x, y), color); 
 		}
 	}
 }
 
-pixel_t* pixel_create_from(pixel_t* o, double dx, double dy, double angle)
+pixel_t pixel_create_from(pixel_t o, double dx, double dy, double angle)
 {
 	int x = (int) round(dx * cos(angle) + dy * sin(angle));
 	int y = (int) round( -1 * dx * sin(angle) + dy * cos(angle));
-	x += o -> x;
-	y += o -> y;
+	x += o.x;
+	y += o.y;
 	return pixel_create(x, y);
 }
-
 
 shape_t* rotate_shape(shape_t* shape, double x, double y, double angle, double scale)
 {
 	size_t i;
 	shape_t* rslt = (shape_t*) malloc(sizeof(shape_t));
 	pixel_t* rotated = (pixel_t*) calloc(shape -> count, sizeof(pixel_t));
-	pixel_t* center = pixel_create((int)round(x), (int)round(y));
+	pixel_t center = pixel_create((int)round(x), (int)round(y));
 	for (i = 0; i < shape -> count; i++)
 	{
 		pixel_t* node = shape -> nodes + i;
-		pixel_t* pxl = pixel_create_from(center, node -> x * scale, node -> y * scale, angle);
-		rotated[i] = *pxl;
-		free(pxl);
+		pixel_t pxl = pixel_create_from(center, node -> x * scale, node -> y * scale, angle);
+		rotated[i] = pxl;
 	}
 	rslt -> count = shape -> count;
 	rslt -> color = shape -> color;
@@ -118,11 +116,12 @@ shape_t* rotate_shape(shape_t* shape, double x, double y, double angle, double s
 void draw_shape(SDL_Surface* screen, shape_t* shape)
 {
 	size_t i;
+	pixel_t* nodes = shape -> nodes;
+	pixel_t* p1, * p2;
 	for (i = 0; i < shape -> count; i++)
 	{
-		pixel_t* nodes = shape -> nodes;
-		pixel_t* p1 = nodes + i;
-		pixel_t* p2 = i + 1 == shape -> count ? nodes : nodes + i + 1;
+		p1 = nodes + i;
+		p2 = i + 1 == shape -> count ? nodes : nodes + i + 1;
 		line(screen, p1, p2, shape -> color);
 	}
 }
@@ -135,7 +134,7 @@ void draw_ship(SDL_Surface* screen, ship_t* ship)
 	free(shape);
 	if (ship -> engine)
 	{
-		shape_t* shape = rotate_shape(&ENGINE_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
+		shape = rotate_shape(&ENGINE_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
 		draw_shape(screen, shape);
 		free(shape -> nodes);
 		free(shape);
@@ -144,9 +143,10 @@ void draw_ship(SDL_Surface* screen, ship_t* ship)
 
 void draw_asts(SDL_Surface* screen, asteroid_t* ast)
 {
+	shape_t* shape;
 	while (ast != NULL)
 	{
-		shape_t* shape = rotate_shape(&ASTEROID_DRAWING_SHAPE, ast -> x, ast -> y, 0, ast-> size * 2);
+		shape = rotate_shape(&ASTEROID_DRAWING_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2);
 		draw_shape(screen, shape);
 		free(shape -> nodes);
 		free(shape);
@@ -159,9 +159,7 @@ void draw_missles(SDL_Surface* screen, missle_t* list)
 	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0x00);
 	while (list != NULL)
 	{
-		pixel_t* pixel = pixel_create((int)list -> x, (int)list -> y);
-		putpixel(screen, pixel, color);
-		free(pixel);
+		putpixel(screen, pixel_create((int)list -> x, (int)list -> y), color);
 		list = list -> next;
 	}
 }
