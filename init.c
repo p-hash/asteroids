@@ -1,39 +1,56 @@
 #include "asteroids.h"
 
+void free_shape(shape_t* shape)
+{
+	free(shape -> nodes);
+	free(shape);
+}
+
 void cleanup()
 {
+	free_shape(SHIP_COLLISION_SHAPE);
+	free_shape(SHIP_DRAWING_SHAPE);
+	free_shape(ENGINE_DRAWING_SHAPE);
+	free_shape(ASTEROID_COLLISION_SHAPE);
+	free_shape(ASTEROID_DRAWING_SHAPE);
 	SDL_Quit();
 	exit(0);
 }
 
 void init_shapes(SDL_Surface* screen) {
-	pixel_t* pxl_array = (pixel_t*) calloc(5, sizeof(pixel_t));
+	pixel_t* pxl_array;
+	
+	SHIP_DRAWING_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(5 * sizeof(pixel_t));
 	pxl_array[0].x = 20; pxl_array[0].y = 0; 
 	pxl_array[1].x = -4; pxl_array[1].y = 10; 
 	pxl_array[2].x = 0; pxl_array[2].y = 8; 
 	pxl_array[3].x = 0; pxl_array[3].y = -8; 
 	pxl_array[4].x = -4; pxl_array[4].y = -10;
-	SHIP_DRAWING_SHAPE.nodes = pxl_array;
-	SHIP_DRAWING_SHAPE.count = 5;
-	SHIP_DRAWING_SHAPE.color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
+	SHIP_DRAWING_SHAPE -> nodes = pxl_array;
+	SHIP_DRAWING_SHAPE -> count = 5;
+	SHIP_DRAWING_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
 	
-	pxl_array = (pixel_t*) calloc(3, sizeof(pixel_t));
+	ENGINE_DRAWING_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(3 * sizeof(pixel_t));
 	pxl_array[0].x = -1; pxl_array[0].y = 4; 
 	pxl_array[1].x = -6; pxl_array[1].y = 0; 
 	pxl_array[2].x = -1; pxl_array[2].y = -4; 
-	ENGINE_DRAWING_SHAPE.nodes = pxl_array;
-	ENGINE_DRAWING_SHAPE.count = 3;
-	ENGINE_DRAWING_SHAPE.color = SDL_MapRGB(screen -> format, 0xff, 0, 0);
+	ENGINE_DRAWING_SHAPE -> nodes = pxl_array;
+	ENGINE_DRAWING_SHAPE -> count = 3;
+	ENGINE_DRAWING_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0, 0);
 	
-	pxl_array = (pixel_t*) calloc(3, sizeof(pixel_t));
+	SHIP_COLLISION_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(3 * sizeof(pixel_t));
 	pxl_array[0].x = 20; pxl_array[0].y = 0; 
 	pxl_array[1].x = 0; pxl_array[1].y = 8; 
 	pxl_array[2].x = 0; pxl_array[2].y = -8; 
-	SHIP_COLLISION_SHAPE.nodes = pxl_array;
-	SHIP_COLLISION_SHAPE.count = 3;
-	SHIP_COLLISION_SHAPE.color = 0;
+	SHIP_COLLISION_SHAPE -> nodes = pxl_array;
+	SHIP_COLLISION_SHAPE -> count = 3;
+	SHIP_COLLISION_SHAPE -> color = 0;
 	
-	pxl_array = (pixel_t*) calloc(10, sizeof(pixel_t));
+	ASTEROID_DRAWING_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(10 * sizeof(pixel_t));
 	pxl_array[0].x = -2; pxl_array[0].y = 0; 
 	pxl_array[1].x = -5; pxl_array[1].y = 2; 
 	pxl_array[2].x = 1; pxl_array[2].y = 5; 
@@ -44,18 +61,19 @@ void init_shapes(SDL_Surface* screen) {
 	pxl_array[7].x = 3; pxl_array[7].y = -5; 
 	pxl_array[8].x = -3; pxl_array[8].y = -5; 
 	pxl_array[9].x = -5; pxl_array[9].y = -1; 
-	ASTEROID_DRAWING_SHAPE.nodes = pxl_array;
-	ASTEROID_DRAWING_SHAPE.count = 10;
-	ASTEROID_DRAWING_SHAPE.color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
+	ASTEROID_DRAWING_SHAPE -> nodes = pxl_array;
+	ASTEROID_DRAWING_SHAPE -> count = 10;
+	ASTEROID_DRAWING_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
 	
-	pxl_array = (pixel_t*) calloc(4, sizeof(pixel_t));
+	ASTEROID_COLLISION_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(4 * sizeof(pixel_t));
 	pxl_array[0].x = -4; pxl_array[0].y = -4; 
 	pxl_array[1].x = -4; pxl_array[1].y = 4; 
 	pxl_array[2].x = 4; pxl_array[2].y = 4; 
 	pxl_array[3].x = 4; pxl_array[3].y = -4;
-	ASTEROID_COLLISION_SHAPE.nodes = pxl_array;
-	ASTEROID_COLLISION_SHAPE.count = 4;
-	ASTEROID_COLLISION_SHAPE.color = 0;
+	ASTEROID_COLLISION_SHAPE -> nodes = pxl_array;
+	ASTEROID_COLLISION_SHAPE -> count = 4;
+	ASTEROID_COLLISION_SHAPE -> color = 0;
 }
 
 SDL_Surface* init_video()

@@ -99,7 +99,7 @@ shape_t* rotate_shape(shape_t* shape, double x, double y, double angle, double s
 {
 	size_t i;
 	shape_t* rslt = (shape_t*) malloc(sizeof(shape_t));
-	pixel_t* rotated = (pixel_t*) calloc(shape -> count, sizeof(pixel_t));
+	pixel_t* rotated = (pixel_t*) malloc(shape -> count * sizeof(pixel_t));
 	pixel_t center = pixel_create((int)round(x), (int)round(y));
 	for (i = 0; i < shape -> count; i++)
 	{
@@ -128,16 +128,14 @@ void draw_shape(SDL_Surface* screen, shape_t* shape)
 
 void draw_ship(SDL_Surface* screen, ship_t* ship)
 {
-	shape_t* shape = rotate_shape(&SHIP_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
+	shape_t* shape = rotate_shape(SHIP_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
 	draw_shape(screen, shape);
-	free(shape -> nodes);
-	free(shape);
+	free_shape(shape);
 	if (ship -> engine)
 	{
-		shape = rotate_shape(&ENGINE_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
+		shape = rotate_shape(ENGINE_DRAWING_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
 		draw_shape(screen, shape);
-		free(shape -> nodes);
-		free(shape);
+		free_shape(shape);
 	}
 }
 
@@ -146,10 +144,9 @@ void draw_asts(SDL_Surface* screen, asteroid_t* ast)
 	shape_t* shape;
 	while (ast != NULL)
 	{
-		shape = rotate_shape(&ASTEROID_DRAWING_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2);
+		shape = rotate_shape(ASTEROID_DRAWING_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2);
 		draw_shape(screen, shape);
-		free(shape -> nodes);
-		free(shape);
+		free_shape(shape);
 		ast = ast -> next;
 	}
 }

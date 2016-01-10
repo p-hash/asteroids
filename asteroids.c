@@ -1,6 +1,6 @@
 #include "asteroids.h"
-#include "render.c"
 #include "init.c"
+#include "render.c"
 
 void process_input(ship_t* ship)
 {
@@ -261,7 +261,7 @@ int is_collided(shape_t* s1, shape_t* s2)
 shape_t* get_msl_shape(missle_t* msl)
 {
 	shape_t* rslt = (shape_t*)malloc(sizeof(shape_t));
-	pixel_t* nodes = (pixel_t*)calloc(2, sizeof(pixel_t));
+	pixel_t* nodes = (pixel_t*)malloc(2 * sizeof(pixel_t));
 	nodes -> x = (int) round(msl -> x);
 	nodes -> y = (int) round(msl -> y);
 	nodes++;
@@ -277,8 +277,7 @@ int is_collided_with_msl(missle_t* msl, shape_t* shape)
 {
 	shape_t* msl_shape = get_msl_shape(msl);
 	int rslt = is_collided(shape, msl_shape);
-	free(msl_shape -> nodes);
-	free(msl_shape);
+	free_shape(msl_shape);
 	return rslt;
 }
 
@@ -286,19 +285,19 @@ void detect_collisions(world_t* world)
 {
 	asteroid_t* ast = world -> asteroids;
 	ship_t* ship = world -> ship;
-	shape_t* ship_shape = rotate_shape(&SHIP_COLLISION_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
+	shape_t* ship_shape = rotate_shape(SHIP_COLLISION_SHAPE, ship -> x, ship -> y, ship -> angle, 1);
 	shape_t* ast_shape;
 	while (ast != NULL)
 	{
 		missle_t* msl = world -> missles;
 		missle_t* dtryr = NULL;
-		ast_shape = rotate_shape(&ASTEROID_COLLISION_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2); 
+		ast_shape = rotate_shape(ASTEROID_COLLISION_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2); 
 		if (is_collided(ship_shape, ast_shape))
 		{
 			free(ship);
 			world -> ship = init_ship();
-			free(ship_shape -> nodes); free(ast_shape -> nodes);
-			free(ship_shape); free(ast_shape);
+			free_shape(ship_shape); 
+			free_shape(ast_shape);
 			return;
 		}
 		while (msl != NULL)
@@ -310,28 +309,30 @@ void detect_collisions(world_t* world)
 			}
 			msl = msl -> next;
 		}
-		if ((dtryr != NULL) & (ast -> size > 0)) 
+		if (dtryr != NULL)
 		{
-			asteroid_t* small_ast = (asteroid_t*) malloc(sizeof(asteroid_t));
 			ast -> size--;
-			small_ast -> size = ast -> size;
-			small_ast -> x = ast -> x;
-			small_ast -> y = ast -> y;
-			small_ast -> speed_x = rand() % 5;
-			ast -> speed_x = 2 * ast -> speed_x + 0.01 * dtryr -> speed_x - small_ast -> speed_x;
-			if (ast -> speed_x > 5) ast -> speed_x = 5;
-			small_ast -> speed_y = rand() % 5;
-			ast -> speed_y = 2 * ast -> speed_y + 0.01 * dtryr -> speed_y - small_ast -> speed_y;
-			if (ast -> speed_y > 5) ast -> speed_y = 5;
-			small_ast -> next = ast -> next;
-			ast -> next = small_ast;
+			if (ast -> size > 0) 
+			{
+				asteroid_t* small_ast = (asteroid_t*) malloc(sizeof(asteroid_t));
+				small_ast -> size = ast -> size;
+				small_ast -> x = ast -> x;
+				small_ast -> y = ast -> y;
+				small_ast -> speed_x = rand() % 5;
+				ast -> speed_x = 2 * ast -> speed_x + 0.01 * dtryr -> speed_x - small_ast -> speed_x;
+				if (ast -> speed_x > 5) ast -> speed_x = 5;
+				small_ast -> speed_y = rand() % 5;
+				ast -> speed_y = 2 * ast -> speed_y + 0.01 * dtryr -> speed_y - small_ast -> speed_y;
+				if (ast -> speed_y > 5) ast -> speed_y = 5;
+				small_ast -> next = ast -> next;
+				ast -> next = small_ast;
+				ast = small_ast;
+			}
 		}
 		ast = ast -> next;
-		free(ast_shape -> nodes);
-		free(ast_shape);
-	}
-	free(ship_shape -> nodes); 
-	free(ship_shape);
+		free_shape(ast_shape);
+	} 
+	free_shape(ship_shape);
 }
 
 void update_world(world_t* world)
