@@ -291,13 +291,27 @@ ship_t* init_ship(int lifes)
 
 asteroid_t* init_asteroids()
 {
-	asteroid_t* ast = (asteroid_t*) malloc(sizeof(asteroid_t));
-	ast -> x = 200;
-	ast -> y = 200;
-	ast -> speed_x = 0;
-	ast -> speed_y = 0;
-	ast -> size = 3;
-	ast -> next = NULL;
+	int count = rand() % 3 + 1;
+	int i;
+	asteroid_t* ast = NULL;
+	for (i = 0; i < count; i++)
+	{
+		asteroid_t* new_ast = (asteroid_t*) malloc(sizeof(asteroid_t));
+		if (rand() % 2 == 0) {
+			new_ast -> x = rand() % WIDTH;
+			new_ast -> y = 1;
+		}
+		else
+		{
+			new_ast -> x = 1;
+			new_ast -> y = rand() % HEIGHT;
+		}
+		new_ast -> speed_x = rand() % ASTEROID_MIN_SPEED;
+		new_ast -> speed_y = rand() % ASTEROID_MIN_SPEED;
+		new_ast -> size = 3;
+		new_ast -> next = ast;
+		ast = new_ast;
+	}
 	return ast;
 }
 
