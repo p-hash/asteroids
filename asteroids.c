@@ -308,7 +308,7 @@ void detect_collisions(world_t* world)
 		}
 		if (dtryr != NULL)
 		{
-			/*TODO: count score */
+			world -> score += 10 * (4 - ast -> size);
 			ast -> size--;
 			if (ast -> size > 0) 
 			{
@@ -355,8 +355,9 @@ int main (int argc, char** argv)
 		draw(screen, world); 
 		SDL_Delay(16); /*TODO: dynamic delay and fps counter */
 	}
-	
+		
+	display_score(screen, world -> score);
 	free_world(world);
-	
+	SDL_Delay(2 * 1000); 
 	return 0;
 }

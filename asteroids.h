@@ -42,6 +42,7 @@ typedef struct {
 	pixel_t* nodes;
 	size_t count;
 	uint32_t color;
+	int is_poligon;
 } shape_t;
 
 shape_t* SHIP_DRAWING_SHAPE = NULL;
@@ -50,6 +51,7 @@ shape_t* SHIP_COLLISION_SHAPE = NULL;
 shape_t* ASTEROID_DRAWING_SHAPE = NULL;
 shape_t* ASTEROID_COLLISION_SHAPE = NULL;
 shape_t* MISSLE_SHAPE = NULL;
+shape_t* DIGITS_SHAPES = NULL;
 
 typedef struct {
 	double k;
@@ -100,6 +102,7 @@ typedef struct {
 	missle_t* missles;
 	asteroid_t* asteroids;
 	enemy_t* enemies;
+	uint64_t score;
 } world_t;
 
 #endif

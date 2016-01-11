@@ -110,6 +110,7 @@ shape_t* rotate_shape(shape_t* shape, double x, double y, double angle, double s
 	rslt -> count = shape -> count;
 	rslt -> color = shape -> color;
 	rslt -> nodes = rotated;
+	rslt -> is_poligon = shape -> is_poligon;
 	return rslt;
 }
 
@@ -118,10 +119,15 @@ void draw_shape(SDL_Surface* screen, shape_t* shape)
 	size_t i;
 	pixel_t* nodes = shape -> nodes;
 	pixel_t* p1, * p2;
-	for (i = 0; i < shape -> count; i++)
+	for (i = 0; i < shape -> count - 1; i++)
 	{
 		p1 = nodes + i;
-		p2 = i + 1 == shape -> count ? nodes : nodes + i + 1;
+		p2 = nodes + i + 1;
+		line(screen, p1, p2, shape -> color);
+	}
+	if (shape -> is_poligon)
+	{
+		p1 = nodes;
 		line(screen, p1, p2, shape -> color);
 	}
 }
@@ -178,6 +184,32 @@ void draw_lifes(SDL_Surface* screen, int count)
 	}
 }
 
+void draw_digit(SDL_Surface* screen, double x, double y, int digit)
+{
+	shape_t* shape = rotate_shape(DIGITS_SHAPES + digit, x, y, 0, 1);
+	draw_shape(screen, shape);
+	free_shape(shape);
+}
+
+void draw_score(SDL_Surface* screen, uint64_t score)
+{
+	int digit;
+	double x = WIDTH - 30;
+	double y = 30; 
+	if (score == 0)
+	{
+		draw_digit(screen, x, y, 0);
+		return;
+	}
+	while (score != 0)
+	{
+		digit = score % 10;
+		score /= 10;
+		draw_digit(screen, x, y, digit);
+		x -= 20;
+	}
+}
+
 void draw(SDL_Surface* screen, world_t* world)
 {
 	if ( SDL_MUSTLOCK(screen) ) {
@@ -191,9 +223,41 @@ void draw(SDL_Surface* screen, world_t* world)
 	draw_asts(screen, world -> asteroids);
 	draw_missles(screen, world -> missles);
 	draw_lifes(screen, world -> ship -> lifes);
+	draw_score(screen, world -> score);
 	
 	if ( SDL_MUSTLOCK(screen) ) {
 		SDL_UnlockSurface(screen);
 	}
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
+}
+
+void display_score(SDL_Surface* screen, uint32_t score)
+{
+	int digit;
+	double x = WIDTH / 2 + 50;
+	double y = HEIGHT / 2; 
+	if ( SDL_MUSTLOCK(screen) ) {
+		if ( SDL_LockSurface(screen) < 0 ) {
+			fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
+		}
+	}
+	SDL_FillRect(screen, NULL, 0x000000);
+	
+	if (score == 0)
+	{
+		draw_digit(screen, x, y, 0);
+		return;
+	}
+	while (score != 0)
+	{
+		digit = score % 10;
+		score /= 10;
+		draw_digit(screen, x, y, digit);
+		x -= 20;
+	}
+	
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+	if ( SDL_MUSTLOCK(screen) ) {
+		SDL_UnlockSurface(screen);
+	}
 }
