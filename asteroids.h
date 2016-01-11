@@ -44,11 +44,12 @@ typedef struct {
 	uint32_t color;
 } shape_t;
 
-shape_t* SHIP_DRAWING_SHAPE;
-shape_t* ENGINE_DRAWING_SHAPE;
-shape_t* SHIP_COLLISION_SHAPE;
-shape_t* ASTEROID_DRAWING_SHAPE;
-shape_t* ASTEROID_COLLISION_SHAPE;
+shape_t* SHIP_DRAWING_SHAPE = NULL;
+shape_t* ENGINE_DRAWING_SHAPE = NULL;
+shape_t* SHIP_COLLISION_SHAPE = NULL;
+shape_t* ASTEROID_DRAWING_SHAPE = NULL;
+shape_t* ASTEROID_COLLISION_SHAPE = NULL;
+shape_t* MISSLE_SHAPE = NULL;
 
 typedef struct {
 	double k;

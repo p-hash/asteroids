@@ -153,10 +153,12 @@ void draw_asts(SDL_Surface* screen, asteroid_t* ast)
 
 void draw_missles(SDL_Surface* screen, missle_t* list)
 {
-	uint32_t color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0x00);
+	shape_t* shape;
 	while (list != NULL)
 	{
-		putpixel(screen, pixel_create((int)list -> x, (int)list -> y), color);
+		shape = rotate_shape(MISSLE_SHAPE, list -> x, list -> y, 0, 1);
+		draw_shape(screen, shape);
+		free_shape(shape);
 		list = list -> next;
 	}
 }

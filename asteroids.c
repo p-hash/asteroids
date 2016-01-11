@@ -162,8 +162,8 @@ missle_t* add_missle(missle_t* list, ship_t* ship)
 	missle = (missle_t*)malloc(sizeof(missle_t));
 	missle -> x = 20 * _cos + ship -> x;
 	missle -> y = -20 * _sin + ship -> y;
-	missle -> speed_x = MISSLE_SPEED * _cos;
-	missle -> speed_y = MISSLE_SPEED * _sin * (-1);
+	missle -> speed_x = MISSLE_SPEED * _cos + ship -> speed_x;
+	missle -> speed_y = MISSLE_SPEED * _sin * (-1) + ship -> speed_y;
 	missle -> life = MISSLE_LIFE;
 	ship -> shoot = 0;
 	missle -> next = list;
@@ -294,6 +294,7 @@ void detect_collisions(world_t* world)
 		ast_shape = rotate_shape(ASTEROID_COLLISION_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2); 
 		if (is_collided(ship_shape, ast_shape))
 		{
+			/* count lifes */
 			free(ship);
 			world -> ship = init_ship();
 			free_shape(ship_shape); 
@@ -311,6 +312,7 @@ void detect_collisions(world_t* world)
 		}
 		if (dtryr != NULL)
 		{
+			/* count score */
 			ast -> size--;
 			if (ast -> size > 0) 
 			{

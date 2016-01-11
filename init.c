@@ -2,9 +2,12 @@
 
 void free_shape(shape_t* shape)
 {
-	free(shape -> nodes);
-	free(shape);
-}
+	if (shape != NULL)
+	{
+		free(shape -> nodes);
+		free(shape);
+	}
+}	
 
 void cleanup()
 {
@@ -13,6 +16,7 @@ void cleanup()
 	free_shape(ENGINE_DRAWING_SHAPE);
 	free_shape(ASTEROID_COLLISION_SHAPE);
 	free_shape(ASTEROID_DRAWING_SHAPE);
+	free_shape(MISSLE_SHAPE);
 	SDL_Quit();
 	exit(0);
 }
@@ -74,6 +78,17 @@ void init_shapes(SDL_Surface* screen) {
 	ASTEROID_COLLISION_SHAPE -> nodes = pxl_array;
 	ASTEROID_COLLISION_SHAPE -> count = 4;
 	ASTEROID_COLLISION_SHAPE -> color = 0;
+	
+	MISSLE_SHAPE = (shape_t*) malloc(sizeof(shape_t));
+	pxl_array = (pixel_t*) malloc(5 * sizeof(pixel_t));
+	pxl_array[0].x = -1; pxl_array[0].y = 0; 
+	pxl_array[1].x = 1; pxl_array[1].y = 0; 
+	pxl_array[2].x = 0; pxl_array[2].y = 0; 
+	pxl_array[3].x = 0; pxl_array[3].y = -1;
+	pxl_array[4].x = 0; pxl_array[4].y = 1;
+	MISSLE_SHAPE -> nodes = pxl_array;
+	MISSLE_SHAPE -> count = 5;
+	MISSLE_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0x00);	
 }
 
 SDL_Surface* init_video()
