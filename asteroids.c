@@ -85,8 +85,8 @@ void update_ship(ship_t* ship)
 	{
 		if ( speed < SHIP_MAX_SPEED ) 
 		{
-			ship -> speed_x += SHIP_ENGINE_ACCEL * cos(ship -> angle);
-			ship -> speed_y -= SHIP_ENGINE_ACCEL * sin(ship -> angle);
+			ship -> speed_x -= SHIP_ENGINE_ACCEL * sin(ship -> angle);
+			ship -> speed_y -= SHIP_ENGINE_ACCEL * cos(ship -> angle);
 		}
 	}
 	
@@ -153,14 +153,14 @@ asteroid_t* update_asts( asteroid_t* list ) {
 missle_t* add_missle(missle_t* list, ship_t* ship) 
 {
 	missle_t* missle = NULL;
-	double _cos = cos(ship -> angle);
-	double _sin = sin(ship -> angle);
+	double _cos = -cos(ship -> angle);
+	double _sin = -sin(ship -> angle);
 	if (!(ship -> shoot)) { return list; }
 	missle = (missle_t*)malloc(sizeof(missle_t));
-	missle -> x = 20 * _cos + ship -> x;
-	missle -> y = -20 * _sin + ship -> y;
-	missle -> speed_x = MISSLE_SPEED * _cos + ship -> speed_x;
-	missle -> speed_y = MISSLE_SPEED * _sin * (-1) + ship -> speed_y;
+	missle -> x = 20 * _sin + ship -> x;
+	missle -> y = 20 * _cos + ship -> y;
+	missle -> speed_x = MISSLE_SPEED * _sin + ship -> speed_x;
+	missle -> speed_y = MISSLE_SPEED * _cos + ship -> speed_y;
 	missle -> life = MISSLE_LIFE;
 	ship -> shoot = 0;
 	missle -> next = list;

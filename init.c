@@ -45,29 +45,29 @@ void init_shapes(SDL_Surface* screen) {
 	
 	SHIP_DRAWING_SHAPE = (shape_t*) malloc(sizeof(shape_t));
 	pxl_array = (pixel_t*) malloc(5 * sizeof(pixel_t));
-	pxl_array[0].x = 20; pxl_array[0].y = 0; 
-	pxl_array[1].x = -4; pxl_array[1].y = 10; 
-	pxl_array[2].x = 0; pxl_array[2].y = 8; 
-	pxl_array[3].x = 0; pxl_array[3].y = -8; 
-	pxl_array[4].x = -4; pxl_array[4].y = -10;
+	pxl_array[0].x = 0; pxl_array[0].y = -20; 
+	pxl_array[1].x = 10; pxl_array[1].y = 4; 
+	pxl_array[2].x = 8; pxl_array[2].y = 0; 
+	pxl_array[3].x = -8; pxl_array[3].y = 0; 
+	pxl_array[4].x = -10; pxl_array[4].y = 4;
 	SHIP_DRAWING_SHAPE -> nodes = pxl_array;
 	SHIP_DRAWING_SHAPE -> count = 5;
 	SHIP_DRAWING_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0xff, 0xff);
 	
 	ENGINE_DRAWING_SHAPE = (shape_t*) malloc(sizeof(shape_t));
 	pxl_array = (pixel_t*) malloc(3 * sizeof(pixel_t));
-	pxl_array[0].x = -1; pxl_array[0].y = 4; 
-	pxl_array[1].x = -6; pxl_array[1].y = 0; 
-	pxl_array[2].x = -1; pxl_array[2].y = -4; 
+	pxl_array[0].x = 4; pxl_array[0].y = 1; 
+	pxl_array[1].x = 0; pxl_array[1].y = 6; 
+	pxl_array[2].x = -4; pxl_array[2].y = 1; 
 	ENGINE_DRAWING_SHAPE -> nodes = pxl_array;
 	ENGINE_DRAWING_SHAPE -> count = 3;
 	ENGINE_DRAWING_SHAPE -> color = SDL_MapRGB(screen -> format, 0xff, 0, 0);
 	
 	SHIP_COLLISION_SHAPE = (shape_t*) malloc(sizeof(shape_t));
 	pxl_array = (pixel_t*) malloc(3 * sizeof(pixel_t));
-	pxl_array[0].x = 20; pxl_array[0].y = 0; 
-	pxl_array[1].x = 0; pxl_array[1].y = 8; 
-	pxl_array[2].x = 0; pxl_array[2].y = -8; 
+	pxl_array[0].x = 0; pxl_array[0].y = -20; 
+	pxl_array[1].x = 8; pxl_array[1].y = 0; 
+	pxl_array[2].x = -8; pxl_array[2].y = 0; 
 	SHIP_COLLISION_SHAPE -> nodes = pxl_array;
 	SHIP_COLLISION_SHAPE -> count = 3;
 	SHIP_COLLISION_SHAPE -> color = 0;
@@ -143,7 +143,7 @@ ship_t* init_ship(int lifes)
 	ship -> rotating_left = 0;
 	ship -> rotating_right = 0;
 	ship -> engine = 0;
-	ship -> angle = M_PI / 2;
+	ship -> angle = 0;
 	ship -> shoot = 0;
 	ship -> lifes = lifes;
 	return ship;
