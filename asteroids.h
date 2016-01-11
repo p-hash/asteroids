@@ -67,6 +67,7 @@ typedef struct {
 	int shoot;
 	double speed_x;
 	double speed_y;
+	int lifes;
 } ship_t;
 
 typedef struct missle_t {

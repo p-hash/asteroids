@@ -10,11 +10,10 @@ void process_input(ship_t* ship)
 		switch(event.type)
 		{  				
 			case SDL_KEYDOWN:
-			/* handle keyboard stuff here */
 				switch (event.key.keysym.sym)
 				{
 					case SDLK_ESCAPE:
-						exit(0);
+						ship -> lifes = 0;
 					break;
 					
 					case SDLK_LEFT:
@@ -59,9 +58,7 @@ void process_input(ship_t* ship)
 			break;
 
 			case SDL_QUIT:
-			/* Set whatever flags are necessary to */
-			/* end the main game loop here */
-				exit(0);
+				ship -> lifes = 0;
 			break;
 		}
 	}
@@ -294,9 +291,8 @@ void detect_collisions(world_t* world)
 		ast_shape = rotate_shape(ASTEROID_COLLISION_SHAPE, ast -> x, ast -> y, 0, ast -> size * 2); 
 		if (is_collided(ship_shape, ast_shape))
 		{
-			/* count lifes */
 			free(ship);
-			world -> ship = init_ship();
+			world -> ship = init_ship(world -> ship -> lifes - 1);
 			free_shape(ship_shape); 
 			free_shape(ast_shape);
 			return;
@@ -312,7 +308,7 @@ void detect_collisions(world_t* world)
 		}
 		if (dtryr != NULL)
 		{
-			/* count score */
+			/*TODO: count score */
 			ast -> size--;
 			if (ast -> size > 0) 
 			{
@@ -352,11 +348,15 @@ int main (int argc, char** argv)
 	world_t* world = init_world();
 	srand(time(NULL));
 	
-	while(1)
-	{		
+	while(world -> ship -> lifes > 0) /*TODO: exit flag */
+	{
 		process_input(world -> ship);
 		update_world(world);
-		draw(screen, world); /*render*/
-		SDL_Delay(16);
+		draw(screen, world); 
+		SDL_Delay(16); /*TODO: dynamic delay and fps counter */
 	}
+	
+	free_world(world);
+	
+	return 0;
 }

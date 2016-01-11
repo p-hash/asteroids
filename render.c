@@ -163,6 +163,21 @@ void draw_missles(SDL_Surface* screen, missle_t* list)
 	}
 }
 
+void draw_lifes(SDL_Surface* screen, int count)
+{
+	int i;
+	shape_t* shape;
+	double x = 30;
+	double y = 30;
+	for (i = 0; i < count; i++)
+	{
+		shape = rotate_shape(SHIP_DRAWING_SHAPE, x, y, 0, 0.5);
+		draw_shape(screen, shape);
+		free_shape(shape);
+		x += 20;
+	}
+}
+
 void draw(SDL_Surface* screen, world_t* world)
 {
 	if ( SDL_MUSTLOCK(screen) ) {
@@ -175,6 +190,7 @@ void draw(SDL_Surface* screen, world_t* world)
 	draw_ship(screen, world -> ship);
 	draw_asts(screen, world -> asteroids);
 	draw_missles(screen, world -> missles);
+	draw_lifes(screen, world -> ship -> lifes);
 	
 	if ( SDL_MUSTLOCK(screen) ) {
 		SDL_UnlockSurface(screen);

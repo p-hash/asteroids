@@ -9,6 +9,25 @@ void free_shape(shape_t* shape)
 	}
 }	
 
+void free_world(world_t* world)
+{
+	asteroid_t* ast = world -> asteroids;
+	missle_t* msl = world -> missles;
+	while (msl != NULL)
+	{
+		missle_t* tmp = msl -> next;
+		free(msl);
+		msl = tmp;
+	}
+	while (ast != NULL)
+	{
+		asteroid_t* tmp = ast -> next;
+		free(ast);
+		ast = tmp;
+	}
+	free(world -> ship);
+}
+
 void cleanup()
 {
 	free_shape(SHIP_COLLISION_SHAPE);
@@ -114,7 +133,7 @@ SDL_Surface* init_video()
 	return screen;
 }
 
-ship_t* init_ship()
+ship_t* init_ship(int lifes)
 {	
 	ship_t* ship  = (ship_t*) malloc(sizeof(ship_t));
 	ship -> x = WIDTH / 2;
@@ -126,6 +145,7 @@ ship_t* init_ship()
 	ship -> engine = 0;
 	ship -> angle = M_PI / 2;
 	ship -> shoot = 0;
+	ship -> lifes = lifes;
 	return ship;
 }
 
@@ -144,7 +164,7 @@ asteroid_t* init_asteroids()
 world_t* init_world()
 {
 	world_t* world = (world_t*) malloc(sizeof(world_t));
-	world -> ship = init_ship();
+	world -> ship = init_ship(3);
 	world -> asteroids = init_asteroids();
 	world -> missles = NULL;
 	world -> enemies = NULL;
