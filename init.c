@@ -60,14 +60,16 @@ void init_digit_shapes(SDL_Surface* screen)
 		DIGITS_SHAPES[i].color = color;
 	
 	shape = DIGITS_SHAPES;	
-	pxl_array = (pixel_t*) malloc(4 * sizeof(pixel_t)); /* 0 */
-	pxl_array[0].x = -5; pxl_array[0].y = -10; 
-	pxl_array[1].x = 5; pxl_array[1].y = -10; 
-	pxl_array[2].x = 5; pxl_array[2].y = 10; 
-	pxl_array[3].x = -5; pxl_array[3].y = 10; 
+	pxl_array = (pixel_t*) malloc(6 * sizeof(pixel_t)); /* 0 */
+	pxl_array[0].x = 5; pxl_array[0].y = -10; 
+	pxl_array[1].x = 5; pxl_array[1].y = 10; 
+	pxl_array[2].x = -5; pxl_array[2].y = 10; 
+	pxl_array[3].x = -5; pxl_array[3].y = -10; 
+	pxl_array[4].x = 5; pxl_array[4].y = -10; 
+	pxl_array[5].x = -5; pxl_array[5].y = 10; 
 	shape -> nodes = pxl_array;
-	shape -> count = 4;
-	shape -> is_poligon = 1;
+	shape -> count = 6;
+	shape -> is_poligon = 0;
 	shape++;
 	
 	pxl_array = (pixel_t*) malloc(5 * sizeof(pixel_t)); /* 1 */
